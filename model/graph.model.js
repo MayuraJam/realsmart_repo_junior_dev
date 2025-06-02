@@ -32,3 +32,6 @@ const DataScrema = mongoose.Schema({
         type:Number
     },
 })
+
+const DataModel = mongoose.model("Data",DataScrema,"data");
+module.exports = DataModel;

@@ -2,7 +2,8 @@ const  express = require("express");
 const cors = require("cors");
 const connect = require("./config/connectDatabase.js");
 const testAPIRouter =require("./router/testAPI.route.js");
-const UserRouter = require("./router/user.route.js"); 
+const UserRouter = require("./router/user.route.js");
+const DataRouter = require("./router/graph.route.js"); 
 require("dotenv").config();
 
 const app = express();
@@ -21,6 +22,7 @@ app.get('/',(req,res)=>{
 
 app.use("/creature",testAPIRouter);
 app.use("/user",UserRouter);
+app.use("/data",DataRouter);
 
 connect().then(()=>{
     app.listen(port,()=>{
