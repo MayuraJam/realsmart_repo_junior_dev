@@ -55,7 +55,7 @@ const login = async (req, res) => {
 
     res
       .status(200)
-      .json({ message: "Welcome to Dashboard page !!", token: token });
+      .json({ message: "Welcome to Dashboard page !!"});
   } catch (error) {
     const errMessage = handleError(error);
     res.status(400).json({ errMessage });

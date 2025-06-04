@@ -4,6 +4,7 @@ const connect = require("./config/connectDatabase.js");
 const testAPIRouter =require("./router/testAPI.route.js");
 const UserRouter = require("./router/user.route.js");
 const DataRouter = require("./router/graph.route.js"); 
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const app = express();
@@ -11,7 +12,11 @@ const port = 3030;
 
 // middleware zone
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin:'http://localhost:5173',
+    credentials:true
+}));
+app.use(cookieParser());
 
 
 // test first API 
