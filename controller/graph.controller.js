@@ -17,32 +17,39 @@ const getAllData = async (req, res) => {
 //แสดงจํานวนข้อมูลทั้งหมด โดยจําแนกตามช่วงวันเวลา (รายชั่วโมง)
 const getCountDataGroupByHour = async (req, res) => {
   try {
-    const data = await DataModel.aggregate([
-      {
-        $project: {
-          hour: {
-            $dateTrunc: {
-              date: { $toDate: "$publisheddate" },
-              unit: "hour",
-              timezone: "Asia/Bangkok",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: "$hour",
-          count: {
-            $sum: 1,
-          },
-        },
-      },
-      {
-        $sort: {
-          _id: 1,
-        },
-      },
-    ]);
+  const data = await DataModel.aggregate([
+  {
+    $project: {
+      hourOnly: {
+        $dateToString: {
+          format: "%H:00", 
+          date: { $toDate: "$publisheddate" },
+          timezone: "Asia/Bangkok"
+        }
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$hourOnly",       
+      metric: { $sum: 1 }     
+    }
+  },
+  {
+    $project: {
+      dimension: "$_id",     
+      metric: 1,
+      _id: 0
+    }
+  },
+  {
+    $sort: {
+      dimension: 1          
+    }
+  }
+]);
+
+
     res.status(200).json({ data: data });
   } catch (error) {
     res.status(500).json({ message: error.message });

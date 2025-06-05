@@ -9,7 +9,6 @@ const requireAuth = async(req,res,next)=>{
     }
     try {
         const decoded = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
-        console.log("ถอดรหัส :",decoded)
         const userData = await UserModel.findById(decoded.id);
         req.user = userData;
         next();

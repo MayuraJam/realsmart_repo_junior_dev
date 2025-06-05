@@ -58,9 +58,7 @@ UserScrema.statics.login = async function (email,password){
     return user;
 }
 
-// UserScrema.methods.createResetPasswordToken = ()=>{
-//     const resetToken =  
-// }
+
 
 
 
