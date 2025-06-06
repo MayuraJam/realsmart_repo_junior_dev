@@ -69,10 +69,10 @@ const getCountDataByKeywordAndHour = async (req, res) => {
       {
         $project: {
           keyword: 1,
-          hour: {
+          day: {
             $dateTrunc: {
               date: { $toDate: "$publisheddate" },
-              unit: "hour",
+              unit: "day",
               timezone: "Asia/Bangkok",
             },
           },
@@ -80,16 +80,28 @@ const getCountDataByKeywordAndHour = async (req, res) => {
       },
       {
         $group: {
-          _id: { hour: "$hour", keyword: "$keyword" },
-          count: { $sum: 1 },
+          _id: "$day",
+          metric: { $sum: 1 },
         },
       },
       {
         $sort: {
-          "_id.hour": 1,
-          count: -1,
+          _id: 1,
         },
       },
+      {
+        $project:{
+          dimension:{
+            $dateToString:{
+              format:"%d/%m/%Y",
+              date:"$_id",
+              timezone: "Asia/Bangkok",
+            }
+          },
+          metric : 1,
+          _id:0
+        }
+      }
     ]);
     res.status(200).json({ data: data });
   } catch (error) {
@@ -136,6 +148,11 @@ const getCountDataByEngagement = async (req, res) => {
         },
       },
       {
+        $sort: {
+          _id: 1,
+        },
+      },
+      {
         $project: {
           dimension: {
             $dateToString: {
@@ -146,18 +163,13 @@ const getCountDataByEngagement = async (req, res) => {
           },
           total_view: 1,
           total_comment: 1,
-          total_share:1,
+          total_share: 1,
           total_like: 1,
           total_love: 1,
           total_sad: 1,
           total_wow: 1,
           total_angry: 1,
-          _id :0
-        },
-      },
-      {
-        $sort: {
-          dimension: -1,
+          _id: 0,
         },
       },
     ]);
