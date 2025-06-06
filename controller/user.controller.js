@@ -80,16 +80,16 @@ const forgetPassword = async (req, res) => {
     if (!user) {
       res.status(404).json({ message: "User does not exist" });
     }
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const hash = await bcrypt.hash(resetToken,Number(bcryptSalt))
+    // const resetToken = crypto.randomBytes(32).toString("hex");
+    // const hash = await bcrypt.hash(resetToken,Number(bcryptSalt))
 
-    await new TokenModel({
-      userId : user._id,
-      token : hash,
-      createdAt : Date.now,
-    }).save();
+    // await new TokenModel({
+    //   userId : user._id,
+    //   token : hash,
+    //   createdAt : Date.now,
+    // }).save();
 
-    res.status(200).json({ message: "Next to reset password"});
+    res.status(200).json({ message: "Next to reset password",data:user});
   } catch (error) {
     res.status(500).json(error);
   }

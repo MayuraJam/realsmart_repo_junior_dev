@@ -17,38 +17,37 @@ const getAllData = async (req, res) => {
 //แสดงจํานวนข้อมูลทั้งหมด โดยจําแนกตามช่วงวันเวลา (รายชั่วโมง)
 const getCountDataGroupByHour = async (req, res) => {
   try {
-  const data = await DataModel.aggregate([
-  {
-    $project: {
-      hourOnly: {
-        $dateToString: {
-          format: "%H:00", 
-          date: { $toDate: "$publisheddate" },
-          timezone: "Asia/Bangkok"
-        }
-      }
-    }
-  },
-  {
-    $group: {
-      _id: "$hourOnly",       
-      metric: { $sum: 1 }     
-    }
-  },
-  {
-    $project: {
-      dimension: "$_id",     
-      metric: 1,
-      _id: 0
-    }
-  },
-  {
-    $sort: {
-      dimension: 1          
-    }
-  }
-]);
-
+    const data = await DataModel.aggregate([
+      {
+        $project: {
+          hourOnly: {
+            $dateToString: {
+              format: "%H:00",
+              date: { $toDate: "$publisheddate" },
+              timezone: "Asia/Bangkok",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$hourOnly",
+          metric: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          dimension: "$_id",
+          metric: 1,
+          _id: 0,
+        },
+      },
+      {
+        $sort: {
+          dimension: 1,
+        },
+      },
+    ]);
 
     res.status(200).json({ data: data });
   } catch (error) {
@@ -104,10 +103,10 @@ const getCountDataByEngagement = async (req, res) => {
     const data = await DataModel.aggregate([
       {
         $project: {
-          hour: {
+          day: {
             $dateTrunc: {
               date: { $toDate: "$publisheddate" },
-              unit: "hour",
+              unit: "day",
               timezone: "Asia/Bangkok",
             },
           },
@@ -125,7 +124,7 @@ const getCountDataByEngagement = async (req, res) => {
       },
       {
         $group: {
-          _id: "$hour",
+          _id: "$day",
           total_view: { $sum: "$engagement.view" },
           total_comment: { $sum: "$engagement.comment" },
           total_share: { $sum: "$engagement.share" },
@@ -137,8 +136,28 @@ const getCountDataByEngagement = async (req, res) => {
         },
       },
       {
+        $project: {
+          dimension: {
+            $dateToString: {
+              format: "%d/%m/%Y",
+              date: "$_id",
+              timezone: "Asia/Bangkok",
+            },
+          },
+          total_view: 1,
+          total_comment: 1,
+          total_share:1,
+          total_like: 1,
+          total_love: 1,
+          total_sad: 1,
+          total_wow: 1,
+          total_angry: 1,
+          _id :0
+        },
+      },
+      {
         $sort: {
-          _id: 1,
+          dimension: -1,
         },
       },
     ]);
