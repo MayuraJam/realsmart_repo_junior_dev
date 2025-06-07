@@ -67,6 +67,7 @@ const getCountDataByKeywordAndHour = async (req, res) => {
   try {
     // ทำการ group วันที่ โดยภายในมี keyword และจำนวนของ keuword เป็น object
     const data = await DataModel.aggregate([
+
       [
         { $unwind: "$keyword" },
         {
@@ -88,32 +89,22 @@ const getCountDataByKeywordAndHour = async (req, res) => {
           },
         },
         {
-          $group: {
-            _id: "$_id.day",
-            metric: {
-              $push: {
-                keyword: "$_id.keyword",
-                count: "$count",
-              },
-            },
-          },
-        },
-        {
           $project: {
-            _id: 0,
             dimension: {
               $dateToString: {
                 format: "%d/%m/%Y",
-                date: "$_id",
+                date: "$_id.day",
                 timezone: "Asia/Bangkok",
               },
             },
-            metric: 1,
+            keyword: "$_id.keyword",
+            count: 1,
+            _id: 0,
           },
         },
         {
           $sort: {
-            dimension: 1,
+            dimension: -1,
           },
         },
       ],
@@ -187,7 +178,7 @@ const getCountDataByEngagement = async (req, res) => {
         $project: {
           dimension: {
             $dateToString: {
-              format: "%d %m",
+              format: "%d/%m/%Y",
               date: "$_id",
               timezone: "Asia/Bangkok",
             },
