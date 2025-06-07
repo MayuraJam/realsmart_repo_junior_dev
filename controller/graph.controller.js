@@ -20,59 +20,11 @@ const getCountDataGroupByHour = async (req, res) => {
     const data = await DataModel.aggregate([
       {
         $project: {
-          hourOnly: {
-            $dateToString: {
-              format: "%H:00",
-              date: { $toDate: "$publisheddate" },
-              timezone: "Asia/Bangkok",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: "$hourOnly",
-          metric: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          dimension: "$_id",
-          metric: 1,
-          _id: 0,
-        },
-      },
-      {
-        $sort: {
-          dimension: 1,
-        },
-      },
-    ]);
-
-    res.status(200).json({ data: data });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-// แสดงจํานวนข้อมูล Keyword โดยจําแนก Keyword ตามช่วงเวลา
-
-const getCountDataByKeywordAndHour = async (req, res) => {
-  try {
-    const data = await DataModel.aggregate([
-      { $unwind: "$keyword" },
-      {
-        $set: {
-          keyword: { $split: ["$keyword", ", "] },
-        },
-      },
-      { $unwind: "$keyword" },
-      {
-        $project: {
           keyword: 1,
           day: {
             $dateTrunc: {
               date: { $toDate: "$publisheddate" },
-              unit: "day",
+              unit: "hour",
               timezone: "Asia/Bangkok",
             },
           },
@@ -90,18 +42,81 @@ const getCountDataByKeywordAndHour = async (req, res) => {
         },
       },
       {
-        $project:{
-          dimension:{
-            $dateToString:{
-              format:"%d/%m/%Y",
-              date:"$_id",
+        $project: {
+          dimension: {
+            $dateToString: {
+              format: "%d/%m/%Y",
+              date: "$_id",
               timezone: "Asia/Bangkok",
-            }
+            },
           },
-          metric : 1,
-          _id:0
-        }
-      }
+          metric: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    res.status(200).json({ data: data });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+// แสดงจํานวนข้อมูล Keyword โดยจําแนก Keyword ตามช่วงเวลา
+
+const getCountDataByKeywordAndHour = async (req, res) => {
+  try {
+    // ทำการ group วันที่ โดยภายในมี keyword และจำนวนของ keuword เป็น object
+    const data = await DataModel.aggregate([
+      [
+        { $unwind: "$keyword" },
+        {
+          $project: {
+            keyword: 1,
+            day: {
+              $dateTrunc: {
+                date: { $toDate: "$publisheddate" },
+                unit: "day",
+                timezone: "Asia/Bangkok",
+              },
+            },
+          },
+        },
+        {
+          $group: {
+            _id: { day: "$day", keyword: "$keyword" },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: "$_id.day",
+            metric: {
+              $push: {
+                keyword: "$_id.keyword",
+                count: "$count",
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            dimension: {
+              $dateToString: {
+                format: "%d/%m/%Y",
+                date: "$_id",
+                timezone: "Asia/Bangkok",
+              },
+            },
+            metric: 1,
+          },
+        },
+        {
+          $sort: {
+            dimension: 1,
+          },
+        },
+      ],
     ]);
     res.status(200).json({ data: data });
   } catch (error) {
@@ -148,6 +163,22 @@ const getCountDataByEngagement = async (req, res) => {
         },
       },
       {
+        $addFields: {
+          total_sum: {
+            $add: [
+              "$total_view",
+              "$total_comment",
+              "$total_share",
+              "$total_like",
+              "$total_love",
+              "$total_sad",
+              "$total_wow",
+              "$total_angry",
+            ],
+          },
+        },
+      },
+      {
         $sort: {
           _id: 1,
         },
@@ -156,20 +187,54 @@ const getCountDataByEngagement = async (req, res) => {
         $project: {
           dimension: {
             $dateToString: {
-              format: "%d/%m/%Y",
+              format: "%d %m",
               date: "$_id",
               timezone: "Asia/Bangkok",
             },
           },
-          total_view: 1,
-          total_comment: 1,
-          total_share: 1,
-          total_like: 1,
-          total_love: 1,
-          total_sad: 1,
-          total_wow: 1,
-          total_angry: 1,
           _id: 0,
+          percent_view: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_view", "$total_sum"] }, 100] },
+            ],
+          },
+          percent_comment: {
+            $round: [
+              {
+                $multiply: [{ $divide: ["$total_comment", "$total_sum"] }, 100],
+              },
+            ],
+          },
+          percent_share: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_share", "$total_sum"] }, 100] },
+            ],
+          },
+          percent_like: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_like", "$total_sum"] }, 100] },
+            ],
+          },
+          percent_love: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_love", "$total_sum"] }, 100] },
+            ],
+          },
+          percent_sad: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_sad", "$total_sum"] }, 100] },
+            ],
+          },
+          percent_wow: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_wow", "$total_sum"] }, 100] },
+            ],
+          },
+          percent_angry: {
+            $round: [
+              { $multiply: [{ $divide: ["$total_angry", "$total_sum"] }, 100] },
+            ],
+          },
         },
       },
     ]);
