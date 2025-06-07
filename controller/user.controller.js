@@ -105,7 +105,7 @@ const passwordReset = async (req, res) => {
     }
     const updateUser = await UserModel.findById(requestBody.id);
 
-    res.status(200).json({ message: "reset password success!",data:updateUser});
+    res.status(200).json({ message: "reset password success!"});
   } catch (error) {
     console.error(error.message || error);
     res.status(500).json({
